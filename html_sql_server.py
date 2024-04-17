@@ -1,9 +1,6 @@
 import socket
 import SQL_ORM
 import json
-from github import Github
-from github import Auth
-
 import queue, threading, time, random
 from tcp_by_size import send_with_size, recv_by_size
 
@@ -173,5 +170,4 @@ def main():
 
 
 if __name__ == "__main__":
-    g = Github('xyAAAXcXACZYBx2YybC1zAzCxAYxc1Cxyz2AByb2')
     main()
