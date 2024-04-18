@@ -24,10 +24,10 @@ def handel_client(client_socket, tid, db):
                 break
 
             data = data.decode()
-            if data[0:4] == "PAREN":
+            if data[0:5] == "PAREN":
                 to_send = parent_action(data[5:], db, client_socket)  # send to the parent part
                 send_with_size(client_socket, to_send.encode())
-            elif data[0:4] == "CHILD":
+            elif data[0:5] == "CHILD":
                 to_send = child_action(data[5:], db, client_socket)  # send to the child part
                 send_with_size(client_socket, to_send.encode())
 
@@ -142,7 +142,7 @@ def parent_action(data, db, client_socket):
     elif action == "GETKID":
         parent_id = fields[0]
         names_of_children = SQL_ORM.CustomerChildORM.get_children(instance, parent_id)
-        to_send = "PROORD|" + str(names_of_children)
+        to_send = str(names_of_children)
 
     elif action == "UPDORD":
         order_id, new_product_name = fields[0], fields[1]

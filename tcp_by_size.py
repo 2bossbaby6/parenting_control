@@ -28,15 +28,12 @@ def recv_by_size(sock):
                 break
             data += _d
 
-    if  TCP_DEBUG and size_header != b'':
-        print ("\nRecv(%s)>>>" % (size_header.decode(),), end='')
-        print ("%s"%(data[:min(len(data),LEN_TO_PRINT)],))
+    if TCP_DEBUG and size_header != b'':
+        print("\nRecv(%s)>>>" % (size_header.decode(),), end='')
+        print("%s"%(data[:min(len(data),LEN_TO_PRINT)],))
     if data_len != len(data):
-        data=b'' # Partial data is like no data !
+        data = b''  # Partial data is like no data !
     return data
-
-
-
 
 
 def send_with_size(sock, bdata):
@@ -45,9 +42,9 @@ def send_with_size(sock, bdata):
     len_data = len(bdata)
     header_data = str(len(bdata)).zfill(size_header_size - 1) + "|"
 
-    bytea = bytearray(header_data,encoding='utf8') + bdata
+    bytea = bytearray(header_data, encoding='utf8') + bdata
 
     sock.send(bytea)
     if TCP_DEBUG and  len_data > 0:
-        print ("\nSent(%s)>>>" % (len_data,), end='')
-        print ("%s"%(bytea[:min(len(bytea),LEN_TO_PRINT)],))
+        print("\nSent(%s)>>>" % (len_data,), end='')
+        print("%s" % (bytea[:min(len(bytea), LEN_TO_PRINT)],))

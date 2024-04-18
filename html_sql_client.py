@@ -8,18 +8,19 @@ class CommandClient:
         self.server_socket = socket.socket()
         self.server_socket.connect(("127.0.0.1", 33445))
         self.children = {}
+        self.create_commands = [{"label": "Create new customer", "action": "PARENINSPAR", "inputs": ["name", "password", "email", "address", "phone"]}]
         self.commands = [
-            {"label": "Time manager", "action": "TMNAGE", "inputs": [""]},
-            {"label": "Set timer for a break", "action": "ABREAK", "inputs": ["section time", "break time"]},
-            {"label": "Website blocking", "action": "DLTUSR", "inputs": ["website address"]},
-            {"label": "Send a message to your kid", "action": "CUSLST", "inputs": ["message"]},
-            {"label": "Exit", "action": "RULIVE", "inputs": []}
+            {"label": "Time manager", "action": "PARENTMNAGE", "inputs": [""]},
+            {"label": "Set timer for a break", "action": "PARENABREAK", "inputs": ["section time", "break time"]},
+            {"label": "Website blocking", "action": "PARENDLTUSR", "inputs": ["website address"]},
+            {"label": "Send a message to your kid", "action": "PARENCUSLST", "inputs": ["message"]},
+            {"label": "Exit", "action": "PARENRULIVE", "inputs": []}
         ]
 
     def execute_command(self, command_data, input_entries, result_label):
         action = command_data["action"]
         inputs = input_entries
-        data = "PAREN" + action
+        data = action
 
         for input_entry in inputs:
             data += "|" + input_entry.get()
@@ -48,11 +49,11 @@ class CommandClient:
         submit_button.pack()
 
     def create_user_window(self):
-        user_window = tk.Toplevel(self.root)
+        user_window = tk.Toplevel()
         user_window.title("Create User")
 
         input_entries = []
-        for input_label in self.commands[1]["inputs"]:
+        for input_label in self.create_commands[0]["inputs"]:
             tk.Label(user_window, text=input_label + ":").pack()
             entry = tk.Entry(user_window)
             entry.pack()
@@ -81,7 +82,7 @@ class CommandClient:
         if "--" in name:
             response = "no"
         else:
-            login_data = f"LOGINN|{name}|{password}|{user_id}"
+            login_data = f"PARENLOGINN|{name}|{password}|{user_id}"
             send_with_size(self.server_socket, login_data.encode())
             response = recv_by_size(self.server_socket).decode()
             response = response[8:]
@@ -99,11 +100,11 @@ class CommandClient:
         selected_child = tk.StringVar()
         selected_child.set("")  # Default value
 
-        send_with_size(self.server_socket, "GETKID")
+        send_with_size(self.server_socket, "PARENGETKID")
         children = recv_by_size(self.server_socket).decode()
         children = children.split(",")
         for child in children:
-            children[child[1:]] = child[0]
+            self.children[child[1:]] = child[0]
             tk.Radiobutton(self.root, text=child, variable=selected_child, value=child[1:]).pack()
 
         confirm_button = tk.Button(self.root, text="Confirm", command=lambda: self.open_main_window(selected_child.get()))

@@ -63,6 +63,7 @@ class CustomerChildORM:
         customer_id INT,
         address TEXT,
         phone TEXT,
+        salt TEXT,
         children TEXT)""")
 
         self.current.execute("""CREATE TABLE children (
@@ -251,7 +252,7 @@ class CustomerChildORM:
         salt = self.generate_salt()
         hashed_password = self.hash_password(str(customer_password), salt, peper)
 
-        sql = "INSERT INTO customers VALUES ('" + customer_name + "', '" + hashed_password + "', '" + email + "', " + str(customer_id) + ", '" + address + "', " + str(phone) + ", '" + str(salt) + "')"
+        sql = "INSERT INTO customers VALUES ('" + customer_name + "', '" + hashed_password + "', '" + email + "', " + str(customer_id) + ", '" + address + "', " + str(phone) + ", '" + str(salt) + "', '')"
         self.current.execute(sql)
         self.commit()
         self.close_DB()
