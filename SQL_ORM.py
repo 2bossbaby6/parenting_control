@@ -51,7 +51,7 @@ class CustomerChildORM:
         self.conn (need DB file name)
         and self.cursor
         """
-        self.conn = sqlite3.connect('CustomerOrder.db')
+        self.conn = sqlite3.connect('CustomerChild.db')
         self.current = self.conn.cursor()
 
     def create_table(self):
@@ -127,16 +127,16 @@ class CustomerChildORM:
 
         return customer_names
 
-    def get_products_that_have_been_ordered(self):
+    def get_children(self, user_id):
         self.open_DB()
-        sql = """SELECT DISTINCT product_ordered
-        FROM orders"""
+        sql = """SELECT children
+        FROM customers"""
         self.current.execute(sql)
         res = self.current.fetchall()
-        products_names = [row[0] for row in res]
+        children_names = [row[0] for row in res]
         self.commit()
         self.close_DB()
-        return products_names
+        return children_names
 
     def get_user_balance(self, username):
         global balance
@@ -159,6 +159,24 @@ class CustomerChildORM:
         sql = """SELECT * 
         FROM customers
         WHERE customer_name ='""" + str(user_name) + "' AND customer_password = '" + str(user_password) + "' AND customer_id = '" + str(user_id) + "'"
+
+        self.current.execute(sql)
+        res = self.current.fetchall()
+        res = list(res[0])
+        if len(res) != 0:
+            return "yes"
+        return "no"
+
+    def child_login(self, child_name, child_id):
+        self.open_DB()
+        # query = """SELECT salt FROM customers WHERE customer_name = '""" + str(user_name) + "' ;"
+        # self.current.execute(query)
+        # salt = self.current.fetchall()
+        # salt = salt[0][0]
+        # user_password = self.hash_password(user_password, salt, peper)
+        sql = """SELECT * 
+        FROM children
+        WHERE child_name ='""" + str(child_name) + "' AND child_id = '" + str(child_id) + "'"
 
         self.current.execute(sql)
         res = self.current.fetchall()
@@ -262,7 +280,7 @@ class CustomerChildORM:
             child_id = ans[0] + 1
 
         sql = """UPDATE customers 
-        SET children = children || '""" + (str(child_name) + str(child_id) + """,'""") \
+        SET children = children || '""" + (str(child_id) + str(child_name) + """',""") \
               + """WHERE customer_id = """ + str(parent_id)
         self.current.execute(sql)
 
@@ -274,7 +292,7 @@ class CustomerChildORM:
         self.commit()
         self.close_DB()
         print(res)
-        return "Ok"
+        return child_id
 
     def update_customer(self, customer_id, customer_name, customer_password, email, address, phone):
         self.open_DB()
@@ -321,7 +339,7 @@ class CustomerChildORM:
 def main_test():
     user1 = Customer("Yos", "12345", "yossi", "zahav", "kefar saba", "123123123", "1111", 1)
 
-    db = CustomerOrderORM()
+    db = CustomerChildORM()
     db.delete_user(user1.customer_name)
     users = db.get_users()
     for u in users:

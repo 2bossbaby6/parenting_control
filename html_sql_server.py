@@ -28,7 +28,7 @@ def handel_client(client_socket, tid, db):
                 to_send = parent_action(data[5:], db, client_socket)  # send to the parent part
                 send_with_size(client_socket, to_send.encode())
             elif data[0:4] == "CHILD":
-                to_send = child_action(data[5:0], db)  # send to the child part
+                to_send = child_action(data[5:], db, client_socket)  # send to the child part
                 send_with_size(client_socket, to_send.encode())
 
         except socket.error as err:
@@ -46,7 +46,7 @@ def handel_client(client_socket, tid, db):
     client_socket.close()
 
 
-def child_action(data, db):
+def child_action(data, db, client_socket):
     """
        check what client ask and fill to send with the answer
        """
@@ -68,9 +68,14 @@ def child_action(data, db):
             to_send = "UPDUSRR|" + "Error"
 
     elif action == "INSKID":  # Insert new child to db
-        customer = SQL_ORM.CustomerChildORM.insert_new_customer(instance, fields[0], fields[1], fields[2],
-                                                                fields[3], fields[4])
-        to_send = "INSKID|" + customer
+        customer = SQL_ORM.CustomerChildORM.insert_new_child(instance, fields[0], fields[1], fields[2], fields[3])
+        to_send = "INSKID|your id is: " + customer
+
+    elif action == "LOGINN":
+        child_name, child_id = fields[0], fields[1]
+        parents_list[child_id] = client_socket
+        login = SQL_ORM.CustomerChildORM.parent_login(instance, child_name, child_id)
+        to_send = "LOGGINN|" + login
 
     else:
         print("Got unknown action from client " + action)
@@ -105,7 +110,7 @@ def parent_action(data, db, client_socket):
     elif action == "INSPAR":  # Insert new parent to data base
         customer = SQL_ORM.CustomerChildORM.insert_new_customer(instance, fields[0], fields[1], fields[2],
                                                                 fields[3], fields[4])
-        to_send = "INSPAR|" + customer
+        to_send = "INSPAR|your id is: " + customer
 
     elif action == "ABREAK":  # create a break for the child
 
@@ -134,9 +139,10 @@ def parent_action(data, db, client_socket):
     elif action == "WHOORD":
         customers_who_ordered_names = SQL_ORM.CustomerOrderORM.get_customers_who_ordered(instance)
         to_send = "WHOORDR|" + str(customers_who_ordered_names)
-    elif action == "PROORD":
-        names_of_products_that_have_been_ordered = SQL_ORM.CustomerOrderORM.get_products_that_have_been_ordered(instance)
-        to_send = "PROORD|" + str(names_of_products_that_have_been_ordered)
+    elif action == "GETKID":
+        parent_id = fields[0]
+        names_of_children = SQL_ORM.CustomerChildORM.get_children(instance, parent_id)
+        to_send = "PROORD|" + str(names_of_children)
 
     elif action == "UPDORD":
         order_id, new_product_name = fields[0], fields[1]
@@ -147,7 +153,7 @@ def parent_action(data, db, client_socket):
         to_send = "RULIVER|" + "yes i am a live server"
     elif action == "LOGINN":
         user_name, user_password, user_id = fields[0], fields[1], fields[2]
-        parents_list[user_name] = client_socket
+        parents_list[user_id] = client_socket
         login = SQL_ORM.CustomerChildORM.parent_login(instance, user_name, user_password, user_id)
         to_send = "LOGGINN|" + login
 
@@ -176,7 +182,7 @@ def main():
     global exit_all
 
     exit_all = False
-    db = SQL_ORM.CustomerOrderORM()
+    db = SQL_ORM.CustomerChildORM()
 
     s = socket.socket()
 
@@ -194,9 +200,8 @@ def main():
     threads = []
     i = 1
     while True:
-        cli_s, addr = s.accept()
-        t = threading.Thread(target=handel_client, args=(cli_s, i, db))
-
+        client_socket, addr = s.accept()
+        t = threading.Thread(target=handel_client, args=(client_socket, i, db))
         t.start()
         i += 1
         threads.append(t)

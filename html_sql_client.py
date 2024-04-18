@@ -5,8 +5,9 @@ from tcp_by_size import send_with_size, recv_by_size
 
 class CommandClient:
     def __init__(self):
-        self.cli_s = socket.socket()
-        self.cli_s.connect(("127.0.0.1", 33445))
+        self.server_socket = socket.socket()
+        self.server_socket.connect(("127.0.0.1", 33445))
+        self.children = {}
         self.commands = [
             {"label": "Time manager", "action": "TMNAGE", "inputs": [""]},
             {"label": "Set timer for a break", "action": "ABREAK", "inputs": ["section time", "break time"]},
@@ -23,8 +24,8 @@ class CommandClient:
         for input_entry in inputs:
             data += "|" + input_entry.get()
 
-        send_with_size(self.cli_s, data.encode())
-        response = recv_by_size(self.cli_s).decode()
+        send_with_size(self.server_socket, data.encode())
+        response = recv_by_size(self.server_socket).decode()
         response = response[7:]
         result_label.config(text="Output:\n" + response)
 
@@ -81,8 +82,8 @@ class CommandClient:
             response = "no"
         else:
             login_data = f"LOGINN|{name}|{password}|{user_id}"
-            send_with_size(self.cli_s, login_data.encode())
-            response = recv_by_size(self.cli_s).decode()
+            send_with_size(self.server_socket, login_data.encode())
+            response = recv_by_size(self.server_socket).decode()
             response = response[8:]
 
         if response == "yes":
@@ -98,10 +99,12 @@ class CommandClient:
         selected_child = tk.StringVar()
         selected_child.set("")  # Default value
 
-        children = ["Child1", "Child2", "Child3"]
-
+        send_with_size(self.server_socket, "GETKID")
+        children = recv_by_size(self.server_socket).decode()
+        children = children.split(",")
         for child in children:
-            tk.Radiobutton(self.root, text=child, variable=selected_child, value=child).pack()
+            children[child[1:]] = child[0]
+            tk.Radiobutton(self.root, text=child, variable=selected_child, value=child[1:]).pack()
 
         confirm_button = tk.Button(self.root, text="Confirm", command=lambda: self.open_main_window(selected_child.get()))
         confirm_button.pack()
