@@ -1,18 +1,26 @@
 import socket
 import json
 import time
+from tcp_by_size import send_with_size, recv_by_size
 
+child_name = "idan"
+child_id = "1"
 class Child:
-    def __init__(self, name):
-        self.name = name
-        self.parent_socket = None
+    def __init__(self):
+        self.child_name = child_name
+        self.child_id = child_id
+        self.server_socket = socket.socket()
+        self.server_socket.connect(("127.0.0.1", 33445))
         self.connected_to_server = False
 
-    def connect_to_server(self):
+    def login_to_server(self):
         # Implement server connection logic
-        pass
+        data = "CHILDINSKID|" + self.child_name + "|" + self.child_id
+        send_with_size(self.server_socket, data.encode())
+        data = recv_by_size(self.server_socket)
+        print(data.decode())
 
-    def register_on_server(self):
+    def create_user(self):
         # Implement child registration on the server logic
         pass
 
@@ -28,21 +36,10 @@ class Child:
         # Implement showing usage limit screen logic
         pass
 
-    def block_website_access(self, website):
-        # Implement blocking website access logic
-        pass
-
     def notify_parent_restricted_access_attempt(self, website):
         # Implement notifying parent of restricted access attempt logic
         pass
 
-    def view_usage_timer(self):
-        # Implement viewing usage timer logic
-        pass
-
-    def run_background_monitoring(self):
-        # Implement background monitoring logic
-        pass
 
 # Example Usage:
 child_name = input("Enter your name: ")
@@ -55,3 +52,6 @@ if not child.connected_to_server:
 
 child.register_on_server()
 child.run_background_monitoring()
+
+
+

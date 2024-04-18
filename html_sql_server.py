@@ -112,6 +112,10 @@ def parent_action(data, db, client_socket):
                                                                 fields[3], fields[4])
         to_send = "INSPAR|your id is: " + customer
 
+    elif action == "INSKID":  # Insert new child to db
+        customer = SQL_ORM.CustomerChildORM.insert_new_child(instance, fields[0], fields[1], fields[2], fields[3])
+        to_send = "INSKID|your id is: " + customer
+
     elif action == "ABREAK":  # create a break for the child
 
         section_time, break_time = fields[0], fields[1]

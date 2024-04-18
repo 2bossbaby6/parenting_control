@@ -71,7 +71,7 @@ class CustomerChildORM:
         child_id INT,
         parent_name TEXT,
         parent_id INT,
-        birthday_date DATE)""")
+        birthday_date TEXT)""")
 
         self.close_DB()
 
@@ -82,6 +82,13 @@ class CustomerChildORM:
         self.conn.commit()
 
     # All read SQL
+    def change_column_type(self):
+        self.open_DB()
+        sql = """ALTER TABLE children 
+        ALTER COLUMN birthday_date TEXT;"""
+        self.current.execute(sql)
+        self.commit()
+        self.close_DB()
 
     def GetCustomerID(self, customer_name):
         self.open_DB()
@@ -276,24 +283,27 @@ class CustomerChildORM:
         self.open_DB()
         child_id = 0
         sql = "SELECT MAX(child_id) FROM children"
-        res = self.current.execute(sql)
-        for ans in res:
-            child_id = ans[0] + 1
-
+        self.current.execute(sql)
+        res = self.current.fetchall()
+        max_child_id = res[0]
+        if max_child_id[0] != None:
+            customer_id = str(max_child_id[0] + 1)
+        else:
+            customer_id = "1"
+        ids = str(child_id) + str(child_name)
         sql = """UPDATE customers 
-        SET children = children || '""" + (str(child_id) + str(child_name) + """',""") \
-              + """WHERE customer_id = """ + str(parent_id)
+                SET children = children || '""" + ids + """' WHERE customer_id = """ + str(parent_id) + ";"
         self.current.execute(sql)
 
         sql = """INSERT INTO children
         VALUES ('""" + str(child_name) + "', " + str(child_id) + ", '" + str(parent_name) + "', " + str(parent_id) +\
-              ", '" + str(birthday_date) + "')"
+              ", '" + str(birthday_date) + """')"""
         self.current.execute(sql)
 
         self.commit()
         self.close_DB()
         print(res)
-        return child_id
+        return str(child_id)
 
     def update_customer(self, customer_id, customer_name, customer_password, email, address, phone):
         self.open_DB()
@@ -349,3 +359,5 @@ def main_test():
 
 if __name__ == "__main__":
     main_test()
+    #instance = CustomerChildORM()
+    #CustomerChildORM.create_table(instance)

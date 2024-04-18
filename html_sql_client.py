@@ -8,10 +8,12 @@ class CommandClient:
         self.server_socket = socket.socket()
         self.server_socket.connect(("127.0.0.1", 33445))
         self.children = {}
+        self.current_child = ""
         self.create_commands = [{"label": "Create new customer", "action": "PARENINSPAR", "inputs": ["name", "password", "email", "address", "phone"]}]
         self.commands = [
             {"label": "Time manager", "action": "PARENTMNAGE", "inputs": [""]},
             {"label": "Set timer for a break", "action": "PARENABREAK", "inputs": ["section time", "break time"]},
+            {"label": "Create new child account", "action": "PARENINSKID", "inputs": ["child name", "parent name", "parent id", "birthday date"]},
             {"label": "Website blocking", "action": "PARENDLTUSR", "inputs": ["website address"]},
             {"label": "Send a message to your kid", "action": "PARENCUSLST", "inputs": ["message"]},
             {"label": "Exit", "action": "PARENRULIVE", "inputs": []}
@@ -72,7 +74,7 @@ class CommandClient:
             result_label.config(text="Invalid name, names cannot contain '--'")
             return
 
-        self.execute_command(self.commands[1], input_entries, result_label)
+        self.execute_command(self.create_commands[0], input_entries, result_label)
 
     def handle_login(self):
         name = self.name_entry.get()
@@ -94,26 +96,44 @@ class CommandClient:
             self.login_error_label.config(text="Invalid login, please try again")
 
     def create_child_selection_window(self):
-        self.root = tk.Tk()
-        self.root.title("Select Child")
+        self.master = tk.Tk()
+        self.master.title("Select Child")
 
-        selected_child = tk.StringVar()
-        selected_child.set("")  # Default value
+        self.names = []
 
         send_with_size(self.server_socket, "PARENGETKID")
         children = recv_by_size(self.server_socket).decode()
+        children = children[1:-1]
         children = children.split(",")
+
         for child in children:
+            child = child[1:-1]
             self.children[child[1:]] = child[0]
-            tk.Radiobutton(self.root, text=child, variable=selected_child, value=child[1:]).pack()
+            child = child[1:]
+            self.names.append(child)
 
-        confirm_button = tk.Button(self.root, text="Confirm", command=lambda: self.open_main_window(selected_child.get()))
-        confirm_button.pack()
+        self.listbox = tk.Listbox(self.master)
+        self.listbox.pack(pady=10)
 
-        self.root.mainloop()
+        for name in self.names:
+            self.listbox.insert(tk.END, name)
+
+        self.select_button = tk.Button(self.master, text="Select", command=self.print_selection)
+        self.select_button.pack()
+
+        self.master.mainloop()
+
+    def print_selection(self):
+        selected_index = self.listbox.curselection()
+        if selected_index:
+            index = selected_index[0]
+            selected_name = self.listbox.get(index)
+            self.current_child = selected_name
+            print(self.current_child)
+            self.open_main_window(selected_name)
 
     def open_main_window(self, selected_child_name):
-        self.root.destroy()
+        self.master.destroy()
         self.create_main_window(selected_child_name)
 
     def create_main_window(self, selected_child_name):
