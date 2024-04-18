@@ -3,52 +3,85 @@ import SQL_ORM
 import json
 import queue, threading, time, random
 from tcp_by_size import send_with_size, recv_by_size
-import github
 
 DEBUG = True
 exit_all = False
 
-parents_list = []
-children_list = []
-jj = []
+parents_list = {}
+children_list = {}
 
-def handel_client(sock, tid, db):
+
+def handel_client(client_socket, tid, db):
     global exit_all
 
     print("New Client num " + str(tid))
 
     while not exit_all:
         try:
-            data = recv_by_size(sock)
+            data = recv_by_size(client_socket)
             if data == "":
                 print("Error: Seens Client DC")
                 break
 
             data = data.decode()
             if data[0:4] == "PAREN":
-                to_send = parent_action(data[5:], db)  # send to the parent part
-                send_with_size(sock, to_send.encode())
+                to_send = parent_action(data[5:], db, client_socket)  # send to the parent part
+                send_with_size(client_socket, to_send.encode())
             elif data[0:4] == "CHILD":
-                to_send = child_action(data.decode(), db)  # send to the parent part
-                send_with_size(sock, to_send.encode())
+                to_send = child_action(data[5:0], db)  # send to the child part
+                send_with_size(client_socket, to_send.encode())
 
         except socket.error as err:
             if err.errno == 10054:
                 # 'Connection reset by peer'
-                print("Error %d Client is Gone. %s reset by peer." % (err.errno, str(sock)))
+                print("Error %d Client is Gone. %s reset by peer." % (err.errno, str(client_socket)))
                 break
             else:
-                print("%d General Sock Error Client %s disconnected" % (err.errno, str(sock)))
+                print("%d General Sock Error Client %s disconnected" % (err.errno, str(client_socket)))
                 break
 
         except Exception as err:
             print("General Error:" + str(err))
             break
-    sock.close()
+    client_socket.close()
+
+
+def child_action(data, db):
+    """
+       check what client ask and fill to send with the answer
+       """
+    to_send = "Not Set Yet"
+    action = data[:6]
+    data = data[7:]
+    fields = data.split('|')
+    instance = SQL_ORM.CustomerChildORM()
+
+    if DEBUG:
+        print("Got client request " + action + " -- " + str(fields))
+
+    if action == "UPDUSR":
+        usr = SQL_ORM.CustomerChildORM.update_customer(instance, fields[0], fields[1], fields[2],
+                                                       fields[3], fields[4], fields[5])
+        if usr:
+            to_send = "UPDUSRR|" + "Success"
+        else:
+            to_send = "UPDUSRR|" + "Error"
+
+    elif action == "INSKID":  # Insert new child to db
+        customer = SQL_ORM.CustomerChildORM.insert_new_customer(instance, fields[0], fields[1], fields[2],
+                                                                fields[3], fields[4])
+        to_send = "INSKID|" + customer
+
+    else:
+        print("Got unknown action from client " + action)
+        to_send = "ERR___R|001|" + "unknown action"
+
+    return to_send
+
 
 
 # Function to perform actions based on client requests
-def parent_action(data, db):
+def parent_action(data, db, client_socket):
     """
     check what client ask and fill to send with the answer
     """
@@ -56,20 +89,25 @@ def parent_action(data, db):
     action = data[:6]
     data = data[7:]
     fields = data.split('|')
-    instance = SQL_ORM.CustomerOrderORM()
+    instance = SQL_ORM.CustomerChildORM()
 
     if DEBUG:
         print("Got client request " + action + " -- " + str(fields))
 
-    if action == "TMANGE":
-        usr = SQL_ORM.CustomerOrderORM.update_customer(instance, fields[0], fields[1], fields[2],
-                               fields[3], fields[4], fields[5])
+    if action == "UPDUSR":
+        usr = SQL_ORM.CustomerChildORM.update_customer(instance, fields[0], fields[1], fields[2],
+                                                       fields[3], fields[4], fields[5])
         if usr:
-            to_send = "TMANGER|" + "Success"
+            to_send = "UPDUSRR|" + "Success"
         else:
-            to_send = "TMANGER|" + "Error"
+            to_send = "UPDUSRR|" + "Error"
 
-    elif action == "ABREAK":
+    elif action == "INSPAR":  # Insert new parent to data base
+        customer = SQL_ORM.CustomerChildORM.insert_new_customer(instance, fields[0], fields[1], fields[2],
+                                                                fields[3], fields[4])
+        to_send = "INSPAR|" + customer
+
+    elif action == "ABREAK":  # create a break for the child
 
         section_time, break_time = fields[0], fields[1]
 
@@ -79,7 +117,7 @@ def parent_action(data, db):
         customer = SQL_ORM.CustomerOrderORM.delete_customer(instance, fields[0])
         to_send = "DLTUSR|" + customer
 
-    elif action == "CUSLST":
+    elif action == "CUSLST":  # get parents list
         customers_list = SQL_ORM.CustomerOrderORM.get_customers(instance)
         to_send = "CUSLST|" + str(customers_list)
 
@@ -109,7 +147,8 @@ def parent_action(data, db):
         to_send = "RULIVER|" + "yes i am a live server"
     elif action == "LOGINN":
         user_name, user_password, user_id = fields[0], fields[1], fields[2]
-        login = SQL_ORM.CustomerOrderORM.login(instance, user_name, user_password, user_id)
+        parents_list[user_name] = client_socket
+        login = SQL_ORM.CustomerChildORM.parent_login(instance, user_name, user_password, user_id)
         to_send = "LOGGINN|" + login
 
     else:
@@ -128,7 +167,6 @@ def q_manager(q, tid):
         item = q.get()
         print("manager got somthing:" + str(item))
         # do some work with it(item)
-
         q.task_done()
         time.sleep(0.3)
     print("Manager say Bye")
@@ -158,6 +196,7 @@ def main():
     while True:
         cli_s, addr = s.accept()
         t = threading.Thread(target=handel_client, args=(cli_s, i, db))
+
         t.start()
         i += 1
         threads.append(t)

@@ -8,7 +8,7 @@ import hashlib
 peper = "hvvc273h2j12c7zm31mudn9larbd9l46"
 
 class Customer(object):
-    def __init__(self, customer_name, customer_password, email, customer_id, address, phone):
+    def __init__(self, customer_name, customer_password, email, customer_id, address, phone, children):
         self.is_manager = None
         self.customer_name = customer_name
         self.customer_password = customer_password
@@ -16,6 +16,7 @@ class Customer(object):
         self.email = email
         self.phone = phone
         self.customer_id = customer_id
+        self.children = children
 
     def new_pass(self, newpassword):
         self.customer_password = newpassword
@@ -29,15 +30,16 @@ class Customer(object):
                str(self.customer_id)
 
 
-class Order(object):
-    def __init__(self, order_id, customer_id, purchase_date, product_ordered):
-        self.order_id = order_id
-        self.customer_id = customer_id
-        self.purchase_date = purchase_date
-        self.product_ordered = product_ordered
+class Child(object):
+    def __init__(self, child_name, child_id, parent_name, parent_id, birthday_date):
+        self.child_name = child_name
+        self.child_id = child_id
+        self.parent_name = parent_name
+        self.parent_id = parent_id
+        self.birthday_date = birthday_date
 
 
-class CustomerOrderORM:
+class CustomerChildORM:
     def __init__(self):
         self.current = None
         self.conn = None  # will store the DB connection
@@ -60,13 +62,15 @@ class CustomerOrderORM:
         email TEXT,
         customer_id INT,
         address TEXT,
-        phone TEXT)""")
+        phone TEXT,
+        children TEXT)""")
 
-        self.current.execute("""CREATE TABLE orders (
-        order_id INT,
-        customer_id INT,
-        purchase_date DATE,
-        product_ordered TEXT)""")
+        self.current.execute("""CREATE TABLE children (
+        child_name TEXT,
+        child_id INT,
+        parent_name TEXT,
+        parent_id INT,
+        birthday_date DATE)""")
 
         self.close_DB()
 
@@ -106,13 +110,13 @@ class CustomerOrderORM:
 
         return customers
 
-    def get_customers_who_ordered(self):
+    def get_customers_who_have_children(self):
         self.open_DB()
 
         sql = """SELECT DISTINCT customers.customer_name
         FROM customers
-        INNER JOIN orders
-        ON customers.customer_id = orders.customer_id"""
+        INNER JOIN children
+        ON customers.customer_id = children.parent_id"""
         self.current.execute(sql)
         res = self.current.fetchall()
         # Fetch the customer names
@@ -145,7 +149,7 @@ class CustomerOrderORM:
         self.close_DB()
         return balance
 
-    def login(self, user_name, user_password, user_id):
+    def parent_login(self, user_name, user_password, user_id):
         self.open_DB()
         query = """SELECT salt FROM customers WHERE customer_name = '""" + str(user_name) + "' ;"
         self.current.execute(query)
@@ -249,22 +253,22 @@ class CustomerOrderORM:
         return hashed_data
 
     # def insert_new_account(self,username,password,firstname,lastname,address,phone,email):
-    def insert_new_order(self, customer_id, product_ordered):
+    def insert_new_child(self, child_name, parent_name, parent_id, birthday_date):
         self.open_DB()
-        order_id = 0
-        sql = "SELECT MAX(order_id) FROM orders"
+        child_id = 0
+        sql = "SELECT MAX(child_id) FROM children"
         res = self.current.execute(sql)
         for ans in res:
-            order_id = ans[0] + 1
+            child_id = ans[0] + 1
 
         sql = """UPDATE customers 
-        SET ordered = TRUE
-        WHERE customer_id = """ + str(customer_id)
+        SET children = children || '""" + (str(child_name) + str(child_id) + """,'""") \
+              + """WHERE customer_id = """ + str(parent_id)
         self.current.execute(sql)
 
-        sql = """INSERT INTO orders 
-        VALUES (""" + str(order_id) + ", " + str(customer_id) + ", " + str(datetime.date.today()) + \
-              ", '" + str(product_ordered) + "')"
+        sql = """INSERT INTO children
+        VALUES ('""" + str(child_name) + "', " + str(child_id) + ", '" + str(parent_name) + "', " + str(parent_id) +\
+              ", '" + str(birthday_date) + "')"
         self.current.execute(sql)
 
         self.commit()
