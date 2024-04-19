@@ -74,7 +74,7 @@ def child_action(data, db, client_socket):
     elif action == "LOGINN":
         child_name, child_id = fields[0], fields[1]
         parents_list[child_id] = client_socket
-        login = SQL_ORM.CustomerChildORM.parent_login(instance, child_name, child_id)
+        login = SQL_ORM.CustomerChildORM.child_login(instance, child_name, child_id)
         to_send = "LOGGINN|" + login
 
     else:
@@ -92,7 +92,12 @@ def parent_action(data, db, client_socket):
     """
     to_send = "Not Set Yet"
     action = data[:6]
-    data = data[7:]
+    child_id = ""
+    if action == "LOGINN" or action == "INSPAR":
+        data = data[7:]
+    else:
+        child_id = data[7]
+        data = data[8:]
     fields = data.split('|')
     instance = SQL_ORM.CustomerChildORM()
 

@@ -181,10 +181,10 @@ class CustomerChildORM:
         # self.current.execute(query)
         # salt = self.current.fetchall()
         # salt = salt[0][0]
-        # user_password = self.hash_password(user_password, salt, peper)
+        # user_password = self.hash_pasasword(user_password, salt, peper)
         sql = """SELECT * 
         FROM children
-        WHERE child_name ='""" + str(child_name) + "' AND child_id = '" + str(child_id) + "'"
+        WHERE child_name = '""" + str(child_name) + "' AND child_id = '" + str(child_id) + "' ;"
 
         self.current.execute(sql)
         res = self.current.fetchall()

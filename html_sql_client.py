@@ -22,7 +22,7 @@ class CommandClient:
     def execute_command(self, command_data, input_entries, result_label):
         action = command_data["action"]
         inputs = input_entries
-        data = action + "|" + self.children[self.current_child]
+        data = action + self.children[self.current_child]
 
         for input_entry in inputs:
             data += "|" + input_entry.get()
