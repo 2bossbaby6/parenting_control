@@ -93,7 +93,7 @@ def parent_action(data, db, client_socket):
     to_send = "Not Set Yet"
     action = data[:6]
     child_id = ""
-    if action == "LOGINN" or action == "INSPAR":
+    if action == "LOGINN" or action == "INSPAR" or action == "GETKID":
         data = data[7:]
     else:
         child_id = data[7]
