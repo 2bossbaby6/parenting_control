@@ -1,4 +1,4 @@
-import scapy.all
+import scapy.all as scapy
 from collections import Counter
 from scapy.all import sniff
 from scapy.all import DNS, DNSQR, IP, sr1, UDP
@@ -45,13 +45,20 @@ def get_domain_name(ip_address):
     except socket.herror:
         return "No domain name found"
 
+def get_mac(ip):
+    arp_request = scapy.ARP(pdst=ip)
+    broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
+    arp_request_broadcast = broadcast / arp_request
+    answered_list = scapy.srp(arp_request_broadcast, timeout=5, verbose=False)[0]
+    return answered_list[0][1].hwsrc
+
 
 ## Create a Packet Counter
 packet_counts = Counter()
 
 
 ## Define our Custom Action function
-def custom_action(packet, q):
+def custom_action(packet):
     get_all_ip()
     for p in packet:
         # Create tuple of Src/Dst in sorted order
@@ -71,21 +78,23 @@ def custom_action(packet, q):
 
         #print(getHost(ip_address))
 
-        packet.dst = "00:0c:29:3e:be:f0"
+        packet.dst = "0C:84:DC:9C:C6:A5"
+
 
         if ip_address not in ip_list:  # getHost(ip_address) == '022.co.il':
-            scapy.all.sendp(packet, verbose=0)
-            q.put(ip_address)
+            scapy.sendp(packet, verbose=0)
             return(packet)
             #return f"Packet #{sum(packet_counts.values())}: {packet[0][1].src} ==> {packet[0][1].dst}"
 
 
-def main(q):
+def main():
     ## Setup sniff, filtering for IP traffic
-    sniff(filter="ip and src 172.16.13.122", lfilter=lambda packet: custom_action(packet, q))
+    sniff(filter="ip and src 192.168.68.117", lfilter=lambda packet: custom_action(packet))
     print("niff")
     ## Print out packet count per A <--> Z address pair
      #print("\n".join(f"{f'{key[0]} <--> {key[1]}'}: {count}" for key, count in packet_counts.items()))
 
 
 
+if __name__ == '__main__':
+    main()

