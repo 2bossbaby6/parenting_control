@@ -15,7 +15,7 @@ class CommandClient:
             {"label": "Set timer for a break", "action": "PARENABREAK", "inputs": ["section time", "break time"]},
             {"label": "Create new child account", "action": "PARENINSKID", "inputs": ["child name", "parent name", "parent id", "birthday date"]},
             {"label": "Website blocking", "action": "PARENDLTUSR", "inputs": ["website address"]},
-            {"label": "Send a message to your kid", "action": "PARENCUSLST", "inputs": ["message"]},
+            {"label": "Send a message to your kid", "action": "PARENMESSAG", "inputs": ["message"]},
             {"label": "Exit", "action": "PARENRULIVE", "inputs": []}
         ]
 

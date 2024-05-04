@@ -1,40 +1,48 @@
 import socket
 import tkinter as tk
 
-def send_message():
-    message = entry.get()
-    conn.send(message.encode())
-    entry.delete(0, tk.END)
+class ServerGUI:
+    def __init__(self):
+        pass
 
-def close_connection():
-    conn.close()
-    server_socket.close()
-    root.destroy()
+    def send_message(self):
+        message = self.entry.get()
+        self.conn.send(message.encode())
+        self.entry.delete(0, tk.END)
 
-def accept_connection():
-    global conn
-    conn, addr = server_socket.accept()
-    label.configure(text=f"Connected to: {addr}")
+    def close_connection(self):
+        self.conn.close()
+        self.server_socket.close()
+        self.root.destroy()
 
-# Create a TCP/IP socket
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.bind(('localhost', 12345))
-server_socket.listen(1)
+    def accept_connection(self):
+        self.conn, addr = self.server_socket.accept()
+        self.label.configure(text=f"Connected to: {addr}")
 
-# GUI setup
-root = tk.Tk()
-root.title("Server")
-label = tk.Label(root, text="Waiting for connection...")
-label.pack()
-entry = tk.Entry(root)
-entry.pack()
-send_button = tk.Button(root, text="Send", command=send_message)
-send_button.pack()
-close_button = tk.Button(root, text="Close Connection", command=close_connection)
-close_button.pack()
+    def start_server(self):
+        # Create a TCP/IP socket
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.bind(('localhost', 12345))
+        self.server_socket.listen(1)
 
-# Accept connections
-accept_connection()
+        # GUI setup
+        self.root = tk.Tk()
+        self.root.title("Server")
+        self.label = tk.Label(self.root, text="Waiting for connection...")
+        self.label.pack()
+        self.entry = tk.Entry(self.root)
+        self.entry.pack()
+        self.send_button = tk.Button(self.root, text="Send", command=self.send_message)
+        self.send_button.pack()
+        self.close_button = tk.Button(self.root, text="Close Connection", command=self.close_connection)
+        self.close_button.pack()
 
-# Start the GUI event loop
-root.mainloop()
+        # Accept connections
+        self.accept_connection()
+
+        # Start the GUI event loop
+        self.root.mainloop()
+
+# Instantiate and start the server
+server = ServerGUI()
+server.start_server()

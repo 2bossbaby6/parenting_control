@@ -29,7 +29,6 @@ class Child:
             print("error connecting")
 
     def handle_child(self):
-        self.a_break(20, 20)
         while True:
             data = recv_by_size(self.server_socket)
             if data == "":
@@ -46,10 +45,10 @@ class Child:
             if action == "ABREAK":
                 session_time, break_time = fields[0], fields[1]
                 self.a_break(session_time, break_time)
-
-
-
-        pass
+            elif action == "MESSAG":
+                print("nigga")
+                message = fields[0]
+                self.display_text(message)
 
     def a_break(self, session_time, break_time):
         while True:
@@ -79,6 +78,43 @@ class Child:
         root.after(break_time * 1000, root.destroy)
 
         root.mainloop()
+
+    def center_window(self, window, width, height):
+        # Get screen width and height
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+
+        # Calculate position x and y for the window to be centered
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+
+        # Set window position
+        window.geometry(f'{width}x{height}+{x}+{y}')
+
+    def display_text(self, text):
+        # Create a Tkinter window
+        window = tk.Tk()
+        window.title("Text Display")
+
+        # Get screen width and height
+        screen_width = window.winfo_screenwidth()
+        screen_height = window.winfo_screenheight()
+
+        # Set text font and size
+        text_font = ('Helvetica', 12)
+
+        # Create a label to display the text
+        label = tk.Label(window, text=text, font=text_font, wraplength=screen_width)
+        label.pack(padx=20, pady=20)
+
+        # Calculate suitable window size based on text length
+        text_length = len(text)
+        window_width = min(text_length * 10, screen_width - 100)
+        window_height = min((text_length // 50 + 1) * 25, screen_height - 100)
+        self.center_window(window, window_width, window_height)
+
+        # Start the Tkinter event loop
+        window.mainloop()
 
     def create_user(self):
         # Implement child registration on the server logic

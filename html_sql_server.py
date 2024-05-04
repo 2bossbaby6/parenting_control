@@ -27,6 +27,7 @@ def handel_client(client_socket, tid, db):
             if data[0:5] == "PAREN":
                 to_send = parent_action(data[5:], db, client_socket)  # send to the parent part
                 send_with_size(client_socket, to_send.encode())
+
             elif data[0:5] == "CHILD":
                 to_send = child_action(data[5:], db, client_socket)  # send to the child part
                 send_with_size(client_socket, to_send.encode())
@@ -73,7 +74,7 @@ def child_action(data, db, client_socket):
 
     elif action == "LOGINN":
         child_name, child_id = fields[0], fields[1]
-        parents_list[child_id] = client_socket
+        children_list[child_id] = client_socket
         login = SQL_ORM.CustomerChildORM.child_login(instance, child_name, child_id)
         to_send = "LOGGINN|" + login
 
@@ -96,7 +97,7 @@ def parent_action(data, db, client_socket):
     if action == "LOGINN" or action == "INSPAR" or action == "GETKID":
         data = data[7:]
     else:
-        child_id = data[7]
+        child_id = data[6]
         data = data[8:]
     fields = data.split('|')
     instance = SQL_ORM.CustomerChildORM()
@@ -126,14 +127,17 @@ def parent_action(data, db, client_socket):
         section_time, break_time = fields[0], fields[1]
 
         to_send = "ABREAK|" + "A break was set"
+        send_to_kid = "ABREAK|" + str(section_time) + "|" + str(break_time)
+        send_with_size(children_list[child_id], to_send)
 
     elif action == "DLTUSR":
         customer = SQL_ORM.CustomerOrderORM.delete_customer(instance, fields[0])
         to_send = "DLTUSR|" + customer
 
-    elif action == "CUSLST":  # get parents list
-        customers_list = SQL_ORM.CustomerOrderORM.get_customers(instance)
-        to_send = "CUSLST|" + str(customers_list)
+    elif action == "MESSAG":  # get message
+        message = fields[0]
+        to_send = "MESSAG|" + str(message)
+        send_with_size(children_list[child_id], to_send)
 
     elif action == "ORDERP":
         customer_id, product_name = fields[0], fields[1]
