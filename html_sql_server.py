@@ -128,7 +128,7 @@ def parent_action(data, db, client_socket):
 
         to_send = "ABREAK|" + "A break was set"
         send_to_kid = "ABREAK|" + str(section_time) + "|" + str(break_time)
-        send_with_size(children_list[child_id], to_send)
+        send_with_size(children_list[child_id], send_to_kid)
 
     elif action == "DLTUSR":
         customer = SQL_ORM.CustomerOrderORM.delete_customer(instance, fields[0])

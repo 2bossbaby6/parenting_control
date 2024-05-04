@@ -44,9 +44,8 @@ class Child:
 
             if action == "ABREAK":
                 session_time, break_time = fields[0], fields[1]
-                self.a_break(session_time, break_time)
+                self.a_break(int(session_time), int(break_time))
             elif action == "MESSAG":
-                print("nigga")
                 message = fields[0]
                 self.display_text(message)
 
@@ -111,6 +110,11 @@ class Child:
         text_length = len(text)
         window_width = min(text_length * 10, screen_width - 100)
         window_height = min((text_length // 50 + 1) * 25, screen_height - 100)
+
+        # Increase the window size
+        window_width *= 4
+        window_height *= 4
+
         self.center_window(window, window_width, window_height)
 
         # Start the Tkinter event loop
