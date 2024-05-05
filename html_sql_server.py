@@ -139,28 +139,10 @@ def parent_action(data, db, client_socket):
         to_send = "MESSAG|" + str(message)
         send_with_size(children_list[child_id], to_send)
 
-    elif action == "ORDERP":
-        customer_id, product_name = fields[0], fields[1]
-        order = SQL_ORM.CustomerOrderORM.order_product(instance, customer_id, product_name)
-        to_send = "ORDERP|" + order
-
-    elif action == "CNLORD":
-        order_id = fields[0]
-        order_cancel = SQL_ORM.CustomerOrderORM.cancel_order(instance, order_id)
-        to_send = "CNLORD|" + order_cancel
-
-    elif action == "WHOORD":
-        customers_who_ordered_names = SQL_ORM.CustomerOrderORM.get_customers_who_ordered(instance)
-        to_send = "WHOORDR|" + str(customers_who_ordered_names)
     elif action == "GETKID":
         parent_id = fields[0]
         names_of_children = SQL_ORM.CustomerChildORM.get_children(instance, parent_id)
         to_send = str(names_of_children)
-
-    elif action == "UPDORD":
-        order_id, new_product_name = fields[0], fields[1]
-        update_order = SQL_ORM.CustomerOrderORM.update_order(instance, order_id, new_product_name)
-        to_send = "UPDORD|" + update_order
 
     elif action == "RULIVE":
         to_send = "RULIVER|" + "yes i am a live server"

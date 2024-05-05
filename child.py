@@ -153,6 +153,16 @@ HEIGHT = 1000
 
 
 def retreive_screenshot(conn):
+    """
+       Retrieve screenshot and send it over a socket connection.
+
+       This function captures the screen, compresses the image, and sends it
+       over the provided socket connection.
+
+       Args:
+           conn (socket): Socket connection to send the screenshot data.
+       """
+
     with mss() as sct:
         # The region to capture
         rect = {'top': 0, 'left': 0, 'width': WIDTH, 'height': HEIGHT}
