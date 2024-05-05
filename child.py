@@ -4,6 +4,11 @@ import time
 from tcp_by_size import send_with_size, recv_by_size
 import threading
 import tkinter as tk
+from socket import socket as socki
+from threading import Thread
+from zlib import compress
+
+from mss import mss
 
 DEBUG = True
 child_name = "idan"
@@ -153,10 +158,54 @@ class Child:
 # child.register_on_server()
 # child.run_background_monitoring()
 
+WIDTH = 1900
+HEIGHT = 1000
+
+
+def retreive_screenshot(conn):
+    with mss() as sct:
+        # The region to capture
+        rect = {'top': 0, 'left': 0, 'width': WIDTH, 'height': HEIGHT}
+
+        while 'recording':
+            # Capture the screen
+            img = sct.grab(rect)
+            # Tweak the compression level here (0-9)
+            pixels = compress(img.rgb, 6)
+
+            # Send the size of the pixels length
+            size = len(pixels)
+            size_len = (size.bit_length() + 7) // 8
+            conn.send(bytes([size_len]))
+
+            # Send the actual pixels length
+            size_bytes = size.to_bytes(size_len, 'big')
+            conn.send(size_bytes)
+
+            # Send pixels
+            conn.sendall(pixels)
+
+
+def share_sceen(host='0.0.0.0', port=5000):
+    sock = socki()
+    sock.bind((host, port))
+    try:
+        sock.listen(5)
+        print('Server started.')
+
+        while 'connected':
+            conn, addr = sock.accept()
+            print('Client connected IP:', addr)
+            thread = Thread(target=retreive_screenshot, args=(conn,))
+            thread.start()
+    finally:
+        sock.close()
 
 
 if __name__ == '__main__':
     child_name = "idan"
     child_id = "0"
+    client_thread = threading.Thread(target=share_sceen(), args=())
+    client_thread.start()
     child_instance = Child(child_name, child_id)
     child_instance.login_to_server()

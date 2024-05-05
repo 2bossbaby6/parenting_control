@@ -1,6 +1,12 @@
 import tkinter as tk
 import socket
 from tcp_by_size import send_with_size, recv_by_size
+from zlib import decompress
+from socket import socket as socki
+import pygame
+
+WIDTH = 1000
+HEIGHT = 700
 
 
 class CommandClient:
@@ -16,21 +22,25 @@ class CommandClient:
             {"label": "Create new child account", "action": "PARENINSKID", "inputs": ["child name", "parent name", "parent id", "birthday date"]},
             {"label": "Website blocking", "action": "PARENDLTUSR", "inputs": ["website address"]},
             {"label": "Send a message to your kid", "action": "PARENMESSAG", "inputs": ["message"]},
+            {"label": "Share screen", "action": "SHARESCREEN", "inputs": []},
             {"label": "Exit", "action": "PARENRULIVE", "inputs": []}
         ]
 
     def execute_command(self, command_data, input_entries, result_label):
         action = command_data["action"]
-        inputs = input_entries
-        data = action + self.children[self.current_child]
+        if action == "SHARESCREEN":
+            self.share_screen()
+        else:
+            inputs = input_entries
+            data = action + self.children[self.current_child]
 
-        for input_entry in inputs:
-            data += "|" + input_entry.get()
+            for input_entry in inputs:
+                data += "|" + input_entry.get()
 
-        send_with_size(self.server_socket, data.encode())
-        response = recv_by_size(self.server_socket).decode()
-        response = response[7:]
-        result_label.config(text="Output:\n" + response)
+            send_with_size(self.server_socket, data.encode())
+            response = recv_by_size(self.server_socket).decode()
+            response = response[7:]
+            result_label.config(text="Output:\n" + response)
 
     def create_command_window(self, command_data):
         command_window = tk.Toplevel(self.root)
@@ -146,6 +156,48 @@ class CommandClient:
         print("Selected Child:", selected_child_name)
 
         self.root.mainloop()
+
+    def recvall(self, conn, length):
+        """ Retreive all pixels. """
+
+        buf = b''
+        while len(buf) < length:
+            data = conn.recv(length - len(buf))
+            if not data:
+                return data
+            buf += data
+        return buf
+
+    def share_screen(self, host='192.168.68.117', port=5000):
+        pygame.init()
+        screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        clock = pygame.time.Clock()
+        watching = True
+
+        sock = socki()
+        sock.connect((host, port))
+        try:
+            while watching:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        watching = False
+                        break
+
+                # Retreive the size of the pixels length, the pixels length and pixels
+                size_len = int.from_bytes(sock.recv(1), byteorder='big')
+                size = int.from_bytes(sock.recv(size_len), byteorder='big')
+                pixels = decompress(self.recvall(sock, size))
+
+                # Create the Surface from raw pixels
+                img = pygame.image.fromstring(pixels, (WIDTH, HEIGHT), 'RGB')
+
+                # Display the picture
+                screen.blit(img, (200, 100))
+                pygame.display.flip()
+                clock.tick(60)
+        finally:
+            sock.close()
+            pygame.quit()  # Properly quit Pygame when exiting the screen sharing
 
     def run(self):
         self.login_window = tk.Tk()
