@@ -5,8 +5,8 @@ from zlib import decompress
 from socket import socket as socki
 import pygame
 
-WIDTH = 1000
-HEIGHT = 700
+WIDTH = 1900
+HEIGHT = 1000
 
 
 class CommandClient:

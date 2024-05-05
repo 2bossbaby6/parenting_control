@@ -18,7 +18,7 @@ class Child:
         self.child_name = child_name
         self.child_id = child_id
         self.server_socket = socket.socket()
-        self.server_socket.connect(("127.0.0.1", 33445))
+        self.server_socket.connect(("192.168.68.103", 33445))
         self.connected_to_server = False
 
     def login_to_server(self):
@@ -49,7 +49,9 @@ class Child:
 
             if action == "ABREAK":
                 session_time, break_time = fields[0], fields[1]
-                self.a_break(int(session_time), int(break_time))
+                client_thread = threading.Thread(target=self.a_break, args=(int(session_time), int(break_time)))
+                client_thread.start()
+
             elif action == "MESSAG":
                 message = fields[0]
                 self.display_text(message)
@@ -129,20 +131,8 @@ class Child:
         # Implement child registration on the server logic
         pass
 
-    def receive_parental_control_commands(self):
-        # Implement receiving commands from the parent logic
-        pass
-
-    def show_popup_message(self, message):
-        # Implement showing popup message logic
-        pass
-
     def show_usage_limit_screen(self):
         # Implement showing usage limit screen logic
-        pass
-
-    def notify_parent_restricted_access_attempt(self, website):
-        # Implement notifying parent of restricted access attempt logic
         pass
 
 
@@ -205,7 +195,7 @@ def share_sceen(host='0.0.0.0', port=5000):
 if __name__ == '__main__':
     child_name = "idan"
     child_id = "0"
-    client_thread = threading.Thread(target=share_sceen(), args=())
-    client_thread.start()
+    share_screen_thread = threading.Thread(target=share_sceen, args=())
+    share_screen_thread.start()
     child_instance = Child(child_name, child_id)
     child_instance.login_to_server()
