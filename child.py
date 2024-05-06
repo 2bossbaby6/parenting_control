@@ -18,7 +18,7 @@ class Child:
         self.child_name = child_name
         self.child_id = child_id
         self.server_socket = socket.socket()
-        self.server_socket.connect(("192.168.68.103", 33445))
+        self.server_socket.connect(("172.16.13.27", 33445))
         self.connected_to_server = False
 
     def login_to_server(self):
@@ -46,7 +46,7 @@ class Child:
 
             if DEBUG:
                 print("Got client request " + action + " -- " + str(fields))
-
+#
             if action == "ABREAK":
                 session_time, break_time = fields[0], fields[1]
                 client_thread = threading.Thread(target=self.a_break, args=(int(session_time), int(break_time)))

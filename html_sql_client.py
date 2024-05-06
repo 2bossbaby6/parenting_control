@@ -35,6 +35,8 @@ class CommandClient:
         if action == "SHARESCREEN":
             self.share_screen()  # Initiates screen sharing
         else:
+            if action == "PARENINSPAR":
+                pass
             inputs = input_entries
             data = action + self.children[self.current_child]
 
