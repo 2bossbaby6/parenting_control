@@ -20,12 +20,12 @@ class CommandClient:
         self.children = {}
         self.current_child = ""
 
-        self.create_commands = [{"label": "Create new customer", "action": "PARENINSPAR", "inputs": ["name", "password", "email", "address", "phone"]}]
+        self.create_commands = [{"label": "Create new customer", "action": "PARENINSPAR", "inputs": ["name", "password", "email", "address", "phone"]},
+                                {"label": "Create new child account", "action": "PARENINSKID", "inputs": ["child name", "parent name", "parent id", "birthday date"]}]
         self.commands = [
             {"label": "Time manager", "action": "PARENTMNAGE", "inputs": [""]},
             {"label": "Set timer for a break", "action": "PARENABREAK", "inputs": ["section time", "break time"]},
-            {"label": "Create new child account", "action": "PARENINSKID", "inputs": ["child name", "parent name", "parent id", "birthday date"]},
-            {"label": "Website blocking", "action": "PARENDLTUSR", "inputs": ["website address"]},
+            {"label": "Website blocking", "action": "PARENBLOCKW", "inputs": ["website address"]},
             {"label": "Send a message to your kid", "action": "PARENMESSAG", "inputs": ["message"]},
             {"label": "Share screen", "action": "SHARESCREEN", "inputs": []}
         ]
@@ -35,10 +35,12 @@ class CommandClient:
         if action == "SHARESCREEN":
             self.share_screen()  # Initiates screen sharing
         else:
-            if action == "PARENINSPAR":
-                pass
-            inputs = input_entries
-            data = action + self.children[self.current_child]
+            if action == "PARENINSPAR" or action == "PARENINSKID":
+                inputs = input_entries
+                data = action
+            else:
+                inputs = input_entries
+                data = action + self.children[self.current_child]
 
             for input_entry in inputs:
                 data += "|" + input_entry.get()  # Constructs data string with inputs
@@ -93,6 +95,33 @@ class CommandClient:
             return
 
         self.execute_command(self.create_commands[0], input_entries, result_label)
+
+    def create_child_account_window(self):
+        user_window = tk.Toplevel()
+        user_window.title("Create child account")
+
+        input_entries = []
+        for input_label in self.create_commands[1]["inputs"]:
+            # Labels and entry fields for user creation
+            tk.Label(user_window, text=input_label + ":").pack()
+            entry = tk.Entry(user_window)
+            entry.pack()
+            input_entries.append(entry)
+
+        result_label = tk.Label(user_window, text="Output:")
+        result_label.pack()
+
+        submit_button = tk.Button(user_window, text="Create", command=lambda: self.create_child_account(input_entries, result_label))
+        submit_button.pack()
+
+    def create_child_account(self, input_entries, result_label):
+        user_name = input_entries[0].get()
+
+        if "--" in user_name:
+            result_label.config(text="Invalid name, names cannot contain '--'")
+            return
+
+        self.execute_command(self.create_commands[1], input_entries, result_label)
 
     def handle_login(self):
         name = self.name_entry.get()

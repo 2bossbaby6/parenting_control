@@ -4,6 +4,8 @@ from scapy.all import sniff
 from scapy.all import DNS, DNSQR, IP, sr1, UDP
 import socket
 import dns.resolver, dns.reversename
+from socket import socket as socki
+from threading import Thread
 
 
 ip_list = []  # an ip list of all the ip adresses of websites I want to block
@@ -36,6 +38,7 @@ def get_ip(url):
     file = open("websites.txt", 'w')
     file.write(str(url) + " , " + str(getHost(ip_add)) + "\n")
     file.close()
+    return ip_add
 
 
 def get_domain_name(ip_address):
@@ -78,7 +81,7 @@ def custom_action(packet):
 
         #print(getHost(ip_address))
 
-        packet.dst = "00:0c:29:3e:be:f0"  #"0C:84:DC:9C:C6:A5"
+        packet.dst = "00:0c:29:3e:be:f0"
 
 
         if ip_address not in ip_list:  # getHost(ip_address) == '022.co.il':
@@ -95,6 +98,32 @@ def main():
      #print("\n".join(f"{f'{key[0]} <--> {key[1]}'}: {count}" for key, count in packet_counts.items()))
 
 
+def get_websites_to_block():
+    sock = socki()
+    sock.bind(("0.0.0.0", 5000))
+    try:
+        sock.listen(5)
+        print('Server started.')
+
+        while 'connected':
+            conn, addr = sock.accept()
+            print('Client connected IP:', addr)
+            url = ""
+            got_all = False
+            while not got_all:
+                character = conn.recv(1).decode()
+                if character == ">":  # not valid in a url
+                    got_all = True
+                else:
+                    url += character
+            websites_ip = get_ip(url)
+            ip_list.append(str(websites_ip))
+
+    finally:
+        sock.close()
+
 
 if __name__ == '__main__':
+    thread = Thread(target=get_websites_to_block, args=())
+    thread.start()
     main()

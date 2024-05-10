@@ -3,6 +3,8 @@ import SQL_ORM
 import json
 import queue, threading, time, random
 from tcp_by_size import send_with_size, recv_by_size
+from socket import socket as socki
+import re
 
 DEBUG = True
 exit_all = False
@@ -139,6 +141,18 @@ def parent_action(data, db, client_socket):
         to_send = "MESSAG|" + str(message)
         send_with_size(children_list[child_id], to_send)
 
+    elif action == "BLOCKW":  # block website
+        url = fields[0]
+        to_send = "BLOCKW|" + str(url)
+        if is_legal_url(url):
+            sock = socki()
+            sock.connect(("192.168.68.103", 5000))
+            send_with_size(sock, to_send)
+            sock.close()
+            to_send = "BLOCKW|" + "website is now on the blocking list"
+        else:
+            to_send = "BLOCKW|" + "website's url was incorrect, try again"
+
     elif action == "GETKID":
         parent_id = fields[0]
         names_of_children = SQL_ORM.CustomerChildORM.get_children(instance, parent_id)
@@ -157,6 +171,17 @@ def parent_action(data, db, client_socket):
         to_send = "ERR___R|001|" + "unknown action"
 
     return to_send
+
+
+def is_legal_url(url):
+    # Regular expression pattern for basic URL format
+    url_pattern = re.compile(r'^(http|https)://[a-zA-Z0-9\-\\.]+\.[a-zA-Z]{2,}(\\/\S*)?$')
+
+    # Check if the URL matches the pattern
+    if re.match(url_pattern, url):
+        return True
+    else:
+        return False
 
 
 # Function to manage the queue
