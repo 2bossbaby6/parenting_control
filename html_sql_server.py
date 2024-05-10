@@ -143,10 +143,10 @@ def parent_action(data, db, client_socket):
 
     elif action == "BLOCKW":  # block website
         url = fields[0]
-        to_send = "BLOCKW|" + str(url)
+        to_send = str(url)
         if is_legal_url(url):
             sock = socki()
-            sock.connect(("192.168.68.103", 5000))
+            sock.connect(("127.0.0.1", 5000))
             send_with_size(sock, to_send)
             sock.close()
             to_send = "BLOCKW|" + "website is now on the blocking list"
@@ -175,7 +175,7 @@ def parent_action(data, db, client_socket):
 
 def is_legal_url(url):
     # Regular expression pattern for basic URL format
-    url_pattern = re.compile(r'^(http|https)://[a-zA-Z0-9\-\\.]+\.[a-zA-Z]{2,}(\\/\S*)?$')
+    url_pattern = re.compile(r'^(http|https)://[a-zA-Z0-9\-\\.]+\.[a-zA-Z]{2,}(\S*)?$')
 
     # Check if the URL matches the pattern
     if re.match(url_pattern, url):

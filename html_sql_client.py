@@ -290,6 +290,9 @@ class CommandClient:
         create_user_button = tk.Button(self.login_window, text="Create User", command=self.create_user_window)
         create_user_button.pack()
 
+        create_user_button = tk.Button(self.login_window, text="Create child account", command=self.create_child_account)
+        create_user_button.pack()
+
         self.login_error_label = tk.Label(self.login_window, text="")
         self.login_error_label.pack()
 

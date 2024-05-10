@@ -6,16 +6,43 @@ import socket
 import dns.resolver, dns.reversename
 from socket import socket as socki
 from threading import Thread
+from tcp_by_size import send_with_size, recv_by_size
+from urllib.parse import urlparse
 
 
 ip_list = []  # an ip list of all the ip adresses of websites I want to block
 queue = []
 
+def add_text_in_first_empty_line(file_path, text_to_add):
+    # Read the contents of the file
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+    # Find the index of the first empty line
+    first_empty_line_index = None
+    for i, line in enumerate(lines):
+        if not line.strip():
+            first_empty_line_index = i
+            break
+
+    # If no empty line is found, append the text to the end of the file
+    if first_empty_line_index is None:
+        with open(file_path, 'a') as file:
+            file.write('\n' + text_to_add + '\n')
+    else:
+        # Otherwise, insert the text into the first empty line
+        lines[first_empty_line_index] = text_to_add + '\n'
+        with open(file_path, 'w') as file:
+            file.writelines(lines)
+
 def get_all_ip():  # at the start of the run this will get al the ip adresses of the sites we want to block
     file = open("websites.txt", "r")
     for line in file:
         url = line.split(",")[0]
-        ip_add = socket.gethostbyname(url)
+        parsed_url = urlparse(url)
+        domain = parsed_url.netloc
+
+        ip_add = socket.gethostbyname(domain)
         ip_list.append(str(ip_add))
 
 def getHost(ip):
@@ -33,11 +60,15 @@ def getHost(ip):
 
 
 def get_ip(url):
-    ip_add = socket.gethostbyname(url)
+    # Parse the URL to extract the domain name
+    parsed_url = urlparse(url)
+    domain = parsed_url.netloc
+
+    ip_add = socket.gethostbyname(domain)
     print(ip_add)
-    file = open("websites.txt", 'w')
-    file.write(str(url) + " , " + str(getHost(ip_add)) + "\n")
-    file.close()
+    file = "websites.txt"
+    to_write = (str(url))
+    add_text_in_first_empty_line(file, to_write)
     return ip_add
 
 
@@ -61,6 +92,7 @@ packet_counts = Counter()
 
 
 ## Define our Custom Action function
+packet_dst = get_mac("192.168.68.117")
 def custom_action(packet):
     get_all_ip()
     for p in packet:
@@ -81,7 +113,7 @@ def custom_action(packet):
 
         #print(getHost(ip_address))
 
-        packet.dst = "00:0c:29:3e:be:f0"
+        packet.dst = packet_dst
 
 
         if ip_address not in ip_list:  # getHost(ip_address) == '022.co.il':
@@ -92,7 +124,7 @@ def custom_action(packet):
 
 def main():
     ## Setup sniff, filtering for IP traffic
-    sniff(filter="ip and src 172.16.15.194", lfilter=lambda packet: custom_action(packet))
+    sniff(filter="ip and src 192.168.68.117", lfilter=lambda packet: custom_action(packet))
     print("niff")
     ## Print out packet count per A <--> Z address pair
      #print("\n".join(f"{f'{key[0]} <--> {key[1]}'}: {count}" for key, count in packet_counts.items()))
@@ -102,7 +134,7 @@ def get_websites_to_block():
     sock = socki()
     sock.bind(("0.0.0.0", 5000))
     try:
-        sock.listen(5)
+        sock.listen(4)
         print('Server started.')
 
         while 'connected':
@@ -110,12 +142,7 @@ def get_websites_to_block():
             print('Client connected IP:', addr)
             url = ""
             got_all = False
-            while not got_all:
-                character = conn.recv(1).decode()
-                if character == ">":  # not valid in a url
-                    got_all = True
-                else:
-                    url += character
+            url = recv_by_size(conn).decode()
             websites_ip = get_ip(url)
             ip_list.append(str(websites_ip))
 
