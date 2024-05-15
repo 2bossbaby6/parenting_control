@@ -1,91 +1,68 @@
-import sys
-import time
+import tkinter as tk
 import pygetwindow as gw
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
-from PyQt5.QtCore import QTimer, Qt
-import threading
-from PyQt5.QtWidgets import QHeaderView
+import time as tm
 
-# Initialize variables
-current_window = None
-start_time = None
-app_data = {}
-data_lock = threading.Lock()
 
-class HistoryApp(QMainWindow):
-    def __init__(self):
-        super().__init__()
+class ActiveAppScreenTimeApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Active App Screen Time")
 
-        # Create a timer to update the active window
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_active_window)
-        self.timer.start(1000)  # Check every 1 second
+        self.active_app_screen_time = {}
+        self.last_active_app = None
+        self.last_active_time = tm.time()
 
-        self.setWindowTitle("History Viewer")
-        self.setGeometry(100, 100, 800, 600)
+        self.label_title = tk.Label(root, text="Active App Screen Time", font=("Helvetica", 16))
+        self.label_title.pack(pady=(10, 5))
 
-        # Create a table to display history
-        self.history_table = QTableWidget(self)
-        self.history_table.setColumnCount(3)
-        self.history_table.setHorizontalHeaderLabels(["Time", "Activity", "Time Spent"])
-        self.history_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.app_frames = {}  # Dictionary to store frames for each app
 
-        # Create a layout for the table
-        layout = QVBoxLayout()
-        layout.addWidget(self.history_table)
+        self.update_screen_time()
 
-        container = QWidget()
-        container.setLayout(layout)
-        self.setCentralWidget(container)
+    def update_screen_time(self):
+        current_active_app = gw.getActiveWindowTitle()
+        current_time = tm.time()
 
-    def update_active_window(self):
-        global current_window, start_time
-        new_window = gw.getActiveWindow()
-        print("New window:", new_window)
+        if current_active_app != self.last_active_app:
+            if self.last_active_app:
+                screen_time = current_time - self.last_active_time
+                self.active_app_screen_time[self.last_active_app] = self.active_app_screen_time.get(
+                    self.last_active_app, 0) + screen_time
+                self.update_app_boxes()
+            self.last_active_app = current_active_app
+            self.last_active_time = current_time
 
-        if new_window != current_window:
-            print("Different window detected")
-            if current_window is not None:
-                end_time = time.time()
-                elapsed_time = end_time - start_time
-                app_name = current_window.title
-                print("App name:", app_name)
+        self.root.after(1000, self.update_screen_time)  # Update every second
 
-                with data_lock:
-                    if app_name in app_data:
-                        app_data[app_name] += elapsed_time
-                    else:
-                        app_data[app_name] = elapsed_time
+    def update_app_boxes(self):
+        for widget in self.app_frames.values():
+            widget.destroy()
 
-                current_datetime = time.strftime("%Y-%m-%d %H:%M:%S")
-                with open("TrackRecords.txt", "a") as file:
-                    file.write(f"{current_datetime} - Time spent on {app_name}: {elapsed_time:.2f} seconds\n")
+        row = 1
+        for app, time in self.active_app_screen_time.items():
+            total_time_seconds = int(time)
+            total_hours = total_time_seconds // 3600
+            total_minutes = (total_time_seconds % 3600) // 60
+            total_seconds = total_time_seconds % 60
+            time_str = f"{total_hours:02d}:{total_minutes:02d}:{total_seconds:02d}"
 
-            if new_window:
-                print("New window is not None")
-                current_window = new_window
-                start_time = time.time()
+            app_frame = tk.Frame(self.root, borderwidth=2, relief="groove", padx=10, pady=5)
+            app_frame.pack(pady=5)
 
-        self.update_table()
+            app_label = tk.Label(app_frame, text=f"App: {app}", font=("Helvetica", 12))
+            app_label.pack(anchor="w")
 
-    def update_table(self):
-        with data_lock:
-            self.history_table.setRowCount(len(app_data))
-            row = 0
-            for app, time_spent in app_data.items():
-                current_datetime = time.strftime("%I:%M %p")
-                self.history_table.setItem(row, 0, QTableWidgetItem(current_datetime))
-                self.history_table.setItem(row, 1, QTableWidgetItem(f"{app}"))
-                self.history_table.setItem(row, 2, QTableWidgetItem(f"{time_spent:.2f} seconds"))
-                row += 1
+            time_label = tk.Label(app_frame, text=f"Time: {time_str}", font=("Helvetica", 12))
+            time_label.pack(anchor="w")
 
-    def closeEvent(self, event):
-        self.timer.stop()
-        event.accept()
+            self.app_frames[app] = app_frame
+
+
+def main():
+    root = tk.Tk()
+    app = ActiveAppScreenTimeApp(root)
+    root.mainloop()
+
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = HistoryApp()
-    window.show()
-
-    sys.exit(app.exec_())
+    main()
