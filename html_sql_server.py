@@ -137,6 +137,13 @@ def parent_action(data, db, client_socket):
         to_send = "MESSAG|" + str(message)
         send_with_size(children_list[child_id], to_send)
 
+    elif action == "TMNAGE":  # screen time
+        to_send = "TMNAGE"
+        child_socket = children_list[child_id]
+        send_with_size(child_socket, to_send)
+        screentime_data = recv_by_size(child_socket)
+
+
     elif action == "BLOCKW":  # block website
         url = fields[0]
         to_send = str(url)

@@ -58,6 +58,9 @@ class Child:
                 message = fields[0]
                 self.display_text(message)
 
+            elif action == "TMNANG":
+                pass
+
     def a_break(self, session_time, break_time):
         while True:
             # Session time
@@ -128,14 +131,6 @@ class Child:
 
         # Start the Tkinter event loop
         window.mainloop()
-
-    def create_user(self):
-        # Implement child registration on the server logic
-        pass
-
-    def show_usage_limit_screen(self):
-        # Implement showing usage limit screen logic
-        pass
 
 
 # Example Usage:
