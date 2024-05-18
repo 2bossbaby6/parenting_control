@@ -52,7 +52,7 @@ def handel_client(client_socket, tid, db):
 def child_action(data, db, client_socket):
     """
        check what client ask and fill to send with the answer
-       """
+    """
     to_send = "Not Set Yet"
     action = data[:6]
     data = data[7:]
@@ -96,7 +96,7 @@ def parent_action(data, db, client_socket):
     to_send = "Not Set Yet"
     action = data[:6]
     child_id = ""
-    if action == "LOGINN" or action == "INSPAR" or action == "GETKID":
+    if action == "LOGINN" or action == "INSPAR" or action == "GETKID" or action == "INSKID":
         data = data[7:]
     else:
         child_id = data[6]
@@ -131,10 +131,6 @@ def parent_action(data, db, client_socket):
         to_send = "ABREAK|" + "A break was set"
         send_to_kid = "ABREAK|" + str(section_time) + "|" + str(break_time)
         send_with_size(children_list[child_id], send_to_kid)
-
-    elif action == "DLTUSR":
-        customer = SQL_ORM.CustomerOrderORM.delete_customer(instance, fields[0])
-        to_send = "DLTUSR|" + customer
 
     elif action == "MESSAG":  # get message
         message = fields[0]

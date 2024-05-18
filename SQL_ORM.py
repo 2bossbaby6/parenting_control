@@ -146,17 +146,6 @@ class CustomerChildORM:
         self.close_DB()
         return children_names
 
-    def get_user_balance(self, username):
-        global balance
-        self.open_DB()
-
-        sql = "SELECT a.Balance FROM Accounts a , Users b WHERE a.Accountid=b.Accountid and b.Username='" + username + "'"
-        res = self.current.execute(sql)
-        for ans in res:
-            balance = ans[0]
-        self.close_DB()
-        return balance
-
     def parent_login(self, user_name, user_password, user_id):
         self.open_DB()
         query = """SELECT salt FROM customers WHERE customer_name = '""" + str(user_name) + "' ;"
@@ -226,14 +215,6 @@ class CustomerChildORM:
         self.close_DB()
         return "order id is: " + str(order_id)
 
-    def cancel_order(self, order_id):
-        self.open_DB()
-        sql = """DELETE FROM orders 
-        WHERE order_id = """ + str(order_id)
-        self.current.execute(sql)
-        self.commit()
-        self.close_DB()
-        return "order canceled"
 
     def delete_customer(self, customer_id):
         self.open_DB()
@@ -287,10 +268,10 @@ class CustomerChildORM:
         res = self.current.fetchall()
         max_child_id = res[0]
         if max_child_id[0] != None:
-            customer_id = str(max_child_id[0] + 1)
+            child_id = str(max_child_id[0] + 1)
         else:
-            customer_id = "1"
-        ids = str(child_id) + str(child_name)
+            child_id = "1"
+        ids = str(child_id) + str(child_name) + ","
         sql = """UPDATE customers 
                 SET children = children || '""" + ids + """' WHERE customer_id = """ + str(parent_id) + ";"
         self.current.execute(sql)

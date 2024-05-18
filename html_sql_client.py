@@ -131,10 +131,14 @@ class CommandClient:
         if "--" in name:
             response = "no"
         else:
-            login_data = f"PARENLOGINN|{name}|{password}|{user_id}"
-            send_with_size(self.server_socket, login_data.encode())
-            response = recv_by_size(self.server_socket).decode()
-            response = response[8:]
+            if name and password and user_id:  # Check if any field is empty
+                login_data = f"PARENLOGINN|{name}|{password}|{user_id}"
+                send_with_size(self.server_socket, login_data.encode())
+                response = recv_by_size(self.server_socket).decode()
+                response = response[8:]
+            else:
+                self.login_error_label.config(text="You need to fill all the fields")  # Display error message
+                return  # Return without attempting login
 
         if response == "yes":
             self.login_window.destroy()
@@ -226,10 +230,6 @@ class CommandClient:
 
             This method initiates the screen sharing functionality by connecting
             to a remote host and continuously sending screen data.
-
-            Args:
-                host (str): The IP address of the remote host to connect to.
-                port (int): The port number to connect to on the remote host.
             """
 
         # Initialize Pygame and set up the display
@@ -290,8 +290,8 @@ class CommandClient:
         create_user_button = tk.Button(self.login_window, text="Create User", command=self.create_user_window)
         create_user_button.pack()
 
-        create_user_button = tk.Button(self.login_window, text="Create child account", command=self.create_child_account)
-        create_user_button.pack()
+        create_child_button = tk.Button(self.login_window, text="Create child account", command=self.create_child_account_window)
+        create_child_button.pack()
 
         self.login_error_label = tk.Label(self.login_window, text="")
         self.login_error_label.pack()
